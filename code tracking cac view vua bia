@@ -1,0 +1,170 @@
+View_pango1touch:
+with a as (SELECT
+  r.phone,
+  datetime(r.modelCreatedAt,'Asia/Ho_Chi_Minh') as modelCreatedAt_gmt7,
+  datetime(r.createdAt,'Asia/Ho_Chi_Minh') as createdAt_gmt7,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.zoUId') as zoUId,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField01') as OrderId,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField02') as CampaignId,
+  -- JSON_EXTRACT_SCALAR(r.csFields, '$.customField03') as TotalVoucher,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldDouble04') as TotalBill,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldDouble02') as TotalAmount,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldDouble01') as VoucherValue,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldDouble03') as TotalVoucher,
+    JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldLong02') as ZLPMerchantTransId,
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldLong01') as quantity,
+
+
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField05') as ProductSKUNAME,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField06') as ProductSKUCode,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField07') as ProductSKUImage,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField08') as BrandId,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField09') as CDPAppId,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField10') as SessionId,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField11') as CustomerName,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField12') as CustomerPhone,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField13') as ZaUserAppId,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField14') as ShippingAddress,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField15') as ShippingTerritory,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField16') as ShippingTerritoryCode,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField17') as ShippingProvince,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField17') as ShippingDistrict,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField19') as ShippingWard,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField20') as VoucherCode,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField20') as VoucherName,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField22') as PaymentType,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField23') as PaymentStatus,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField24') as Mac,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField25') as ZLPOrderId,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField26') as ZLPTransId,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField27') as ZLPAppId,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField28') as ZLPPaymentChannel,
+
+   from (
+        SELECT ARRAY_AGG(o ORDER BY o.recordAt DESC LIMIT 1)[OFFSET(0)] AS r
+        FROM `abinbev-361705.pangocdp_data.1touch_po` o
+        GROUP BY o.id))
+
+        select *, cast (a.TotalAmount as float64) total_amount_v2 from a
+       
+         where phone not in ("0393669383","0974861499","0908996524","0988257023","0901988782")
+         
+        --  and OrderId not in ("ORD20231023EKRZ", "ORD20231023JGBE", "ORD20231026F1FM", "ORD20231023DG2M", "ORD20231023FMGJ", "ORD20231023898O")
+        -- where JSON_EXTRACT_SCALAR(r.csFields,'$.customField01') lijke 'ORD20231026ENYL'  
+
+View_zminiapplog:
+SELECT
+    r.id,
+    r.cdpAppId,
+    r.zaloAppId,
+    r.zaloUserAppId,
+    r.zoaId,
+    r.zoaUserId,
+    r.zoaUserName,
+    r.email,
+    r.phone,
+    r.eventTrigger,
+    r.eventName,
+    r.eventAt,
+    r.cid,
+    r.utmSource,
+    r.utmMedium,
+    r.utmCampaign
+FROM (
+        SELECT ARRAY_AGG(o ORDER BY o.recordAt DESC LIMIT 1)[OFFSET(0)] AS r
+        FROM `abinbev-361705.pangocdp_data.zalo_miniapp_log` o
+        WHERE o.orgId='b2808c8ee9480a1a2510e82a6f0d5b98'
+        GROUP BY o.id)
+View_pangosell:
+with  a as (SELECT
+  r.phone,
+  datetime(r.modelCreatedAt,'Asia/Ho_Chi_Minh') as modelCreatedAt_gmt7,
+  datetime(r.createdAt,'Asia/Ho_Chi_Minh') as createdAt_gmt7,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.zoUId') as zoUId,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField01') as OrderId,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField02') as CampaignId,
+  -- JSON_EXTRACT_SCALAR(r.csFields, '$.customField03') as TotalVoucher,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldDouble04') as TotalBill,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldDouble06') as LineItemTotal,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldDouble02') as TotalAmount,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldDouble01') as VoucherValue,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldDouble03') as TotalVoucher,
+    JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldLong02') as ZLPMerchantTransId,
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldLong01') as quantity,
+
+
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField05') as ProductSKUNAME,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField06') as ProductSKUCode,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField07') as ProductSKUImage,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField08') as BrandId,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField09') as CDPAppId,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField10') as SessionId,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField11') as CustomerName,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField12') as CustomerPhone,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField13') as ZaUserAppId,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField14') as ShippingAddress,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField15') as ShippingTerritory,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField16') as ShippingTerritoryCode,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField17') as ShippingProvince,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField18') as ShippingDistrict,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField19') as ShippingWard,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField20') as VoucherCode,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField21') as VoucherName,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField22') as PaymentType,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField23') as PaymentStatus,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField24') as Mac,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField25') as ZLPOrderId,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField26') as ZLPTransId,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField27') as ZLPAppId,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField28') as ZLPPaymentChannel,
+
+   from (
+        SELECT ARRAY_AGG(o ORDER BY o.recordAt DESC LIMIT 1)[OFFSET(0)] AS r
+        FROM `abinbev-361705.pangocdp_data.budweiser_pangosell` o
+        GROUP BY o.id))
+
+        select *, cast (a.quantity as float64) quantity_v2,   cast(a.TotalAmount as float64) total_amount_v2 from a where phone not in ("0974861499",
+"0988257023",
+"0966847846",
+"0393669383",
+"0908996524",
+"0359677657",
+"0777841860","0828612130")---- loc phone data test
+       
+        -- where JSON_EXTRACT_SCALAR(r.csFields,'$.customField01') lijke 'ORD20231026ENYL'  
+
+View_donhangtikipush_haravan:
+SELECT
+  r.phone,
+  datetime(r.modelCreatedAt,'Asia/Ho_Chi_Minh') as modelCreatedAt_gmt7,
+  datetime(r.createdAt,'Asia/Ho_Chi_Minh') as createdAt_gmt7,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.zoUId') as zoUId,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField01') as name,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField02') as Zalo_UserAppID,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField03') as CDP_AppID,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField04') as Event_Name,
+
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField05') as utm_source,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField06') as utm_medium,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField07') as utm_campaign,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField08') as Product_Name,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField09') as Product_ID,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField10') as Status_Send_Confirm_Message,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField11') as Order_ID_Purchase,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField14') as Order_ID_key,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldLong01') as Price,
+    JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldLong02') as Quantity,
+
+
+   from (
+        SELECT ARRAY_AGG(o ORDER BY o.recordAt DESC LIMIT 1)[OFFSET(0)] AS r
+        FROM `abinbev-361705.pangocdp_data.cus_info_ord` o
+        GROUP BY o.id)
+        -- where JSON_EXTRACT_SCALAR(r.csFields,'$.customField01') like 'ORD20231026ENYL'  
+
+
+
+
+
+
+

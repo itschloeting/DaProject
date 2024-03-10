@@ -1,0 +1,935 @@
+View_pg_account:
+SELECT  
+  r.refId,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField06') as ZUserAppId,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField03') as AccType,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField01') as AccPhone,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField02') as AccName,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField04') as AccAddress,
+
+
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldBoolean01') as Active,
+FROM (
+        SELECT ARRAY_AGG(o ORDER BY o.recordAt DESC LIMIT 1)[OFFSET(0)] AS r
+        FROM `tuborg-vietnam.pangocdp_data.01_PG_Account` o
+        GROUP BY o.refId)
+View_qrcode_txn:
+SELECT
+        r.refId,
+       
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField04') as pg_AccId,
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField15') as FinalGiftName,
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField01') as status,
+
+
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField25') as utm_source,
+
+
+        DATETIME(TIMESTAMP_SECONDS(CAST(JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldTimestamp01') AS INT64)),'Asia/Ho_Chi_Minh') as IssuedAt,
+        DATETIME(TIMESTAMP_SECONDS(CAST(JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldTimestamp02') AS INT64)),'Asia/Ho_Chi_Minh') as VerifiedAt,
+        DATETIME(TIMESTAMP_SECONDS(CAST(JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldTimestamp04') AS INT64)),'Asia/Ho_Chi_Minh') as UsedAt,
+        DATETIME(r.modelUpdatedAt,'Asia/Ho_Chi_Minh') as modelCreatedAt_gmt7,
+        DATETIME(r.createdAt,'Asia/Ho_Chi_Minh') as createdAt_gmt7,
+        r.systemName
+FROM (
+        SELECT ARRAY_AGG(o ORDER BY o.recordAt DESC LIMIT 1)[OFFSET(0)] AS r
+        FROM `tuborg-vietnam.pangocdp_data.01_QrCode_Txn` o
+        GROUP BY o.refId)
+-- where r.refid like '65573c29e011cca6b88654b2%'
+View_txn_productsku:
+SELECT
+        r.refId,
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField06') as txnid,
+
+
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField01') as productSKU,
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField01') as productName,
+
+
+        CAST(JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldDouble01') AS NUMERIC) as value,
+        CAST(JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldLong01') AS INT64) as qty,
+        DATETIME(r.modelUpdatedAt,'Asia/Ho_Chi_Minh') as modelCreatedAt_gmt7,
+        DATETIME(r.createdAt,'Asia/Ho_Chi_Minh') as createdAt_gmt7,
+        r.systemName
+FROM (
+        SELECT ARRAY_AGG(o ORDER BY o.recordAt DESC LIMIT 1)[OFFSET(0)] AS r
+        FROM `tuborg-vietnam.pangocdp_data.01_trxn_product_sku` o
+        GROUP BY o.refId)
+        WHERE DATETIME(r.createdAt,'Asia/Ho_Chi_Minh') >= '2023-07-21'
+View_waterrun_15072023:
+SELECT
+  JSON_EXTRACT_SCALAR(r.csFields, '$.zoUId') as zoUId,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField05') as zuappid,
+  r.phone,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField03') as fullname,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldLong01') as yob,
+  CAST(EXTRACT(YEAR FROM CURRENT_DATE('Asia/Ho_Chi_Minh')) AS INT64) - CAST(JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldLong01') as INT64) as Age,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldBoolean01') as optin_consent,
+
+
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField07') as utm_source,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField08') as utm_medium,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField09') as utm_campaign,
+  r.eventCtg,
+  r.event,
+  datetime(r.modelCreatedAt,'Asia/Ho_Chi_Minh') as modelCreatedAt_gmt7,
+  datetime(r.createdAt,'Asia/Ho_Chi_Minh') as createdAt_gmt7,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField02') as qrcode_id,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField04') as qrcode_campaignid,
+  r.systemName
+FROM (
+        SELECT ARRAY_AGG(o ORDER BY o.recordAt DESC LIMIT 1)[OFFSET(0)] AS r
+        FROM `tuborg-vietnam.pangocdp_data.01_Waterrun_150723` o
+        GROUP BY o.id)
+
+
+        WHERE datetime(r.createdAt,'Asia/Ho_Chi_Minh') >= '2023-07-15'
+
+
+View_waterun_report:
+With DataTxn AS (
+  SELECT
+    a.refId as qrCodeId,
+    a.FinalGiftName,
+    a.status as qrStatus,
+    b.AccName as PGName,
+    b.AccPhone as PGPhone,
+    a.IssuedAt as qrIssuedAt,
+    a.VerifiedAt as qrVerifiedAt,
+    a.UsedAt as qrUsedAt,
+    a.utm_source as utmsource1,
+  FROM `tuborg-vietnam.for_reporting.01_qrcode_txn` a
+  Left join `tuborg-vietnam.for_reporting.01_pg_account` b on a.pg_AccId = b.refId
+)
+SELECT
+  a.*,
+  b.*
+FROM `tuborg-vietnam.for_reporting.01_waterrun_15072023` a
+LEFT JOIN DataTxn b ON a.qrcode_id = b.qrCodeId
+WHERE a.utm_source <> 'test'
+View_watera_qr_redeem_29072023_gs25:
+SELECT
+  JSON_EXTRACT_SCALAR(r.csFields, '$.zoUId') as zoUId,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField05') as zuappid,
+  r.phone,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField03') as fullname,
+
+
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField10') as pg_phone,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField11') as pg_name,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField02') as qrcode_id,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField13') as qrcode_status,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField04') as qrcode_campaignid,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField15') as cdpapp_id,
+
+
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField07') as utm_source,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField08') as utm_medium,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField09') as utm_campaign,
+  datetime(r.modelCreatedAt,'Asia/Ho_Chi_Minh') as modelCreatedAt_gmt7,
+  datetime(r.createdAt,'Asia/Ho_Chi_Minh') as createdAt_gmt7,
+ 
+  r.systemName
+FROM (
+        SELECT ARRAY_AGG(o ORDER BY o.recordAt DESC LIMIT 1)[OFFSET(0)] AS r
+        FROM `tuborg-vietnam.pangocdp_data.02_Watera_2907_QR_Redeem_GS25` o
+        GROUP BY o.id)
+View_watera_2907_report:
+SELECT
+  a.zuappid,
+  a.zoUId,
+  a.phone,
+  a.fullname,
+  a.yob,
+  a.Age,
+  case when a.Age between 0 and 24 then '18-24'
+       when a.Age between 25 and 34 then '25-34'
+       when a.Age between 35 and 44 then '35-44'
+       when a.Age between 45 and 54 then '45-54'
+       when a.Age between 55 and 64 then '55-64'
+       else 'Above 65' end as ageRange,
+  a.optin_consent,
+  a.utm_source,
+  a.utm_medium,
+  a.utm_campaign,
+  a.createdAt_gmt7 as registered_At,
+
+
+  a.qrcode_id,
+  a.qrcode_campaignid,
+  IFNULL(b.qrcode_status,'issued') as qrcode_status,
+  b.createdAt_gmt7 as redeem_at,
+  b.pg_phone,
+  b.pg_name
+FROM `tuborg-vietnam.for_reporting.02_watera_2907_ticket_register_gs25` a
+LEFT JOIN `tuborg-vietnam.for_reporting.02_watera_2907_qr_redeem_gs25` b ON a.qrcode_id = b.qrcode_id
+WHERE a.createdAt_gmt7 >= '2023-07-22' and a.utm_source <> ''
+
+
+View_watera_ticket_register_gs25:
+SELECT
+  JSON_EXTRACT_SCALAR(r.csFields, '$.zoUId') as zoUId,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField05') as zuappid,
+  r.phone,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField03') as fullname,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldLong01') as yob,
+  CAST(EXTRACT(YEAR FROM CURRENT_DATE('Asia/Ho_Chi_Minh')) AS INT64) - CAST(JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldLong01') as INT64) as Age,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldBoolean01') as optin_consent,
+
+
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField07') as utm_source,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField08') as utm_medium,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField09') as utm_campaign,
+  r.eventCtg,
+  r.event,
+  datetime(r.modelCreatedAt,'Asia/Ho_Chi_Minh') as modelCreatedAt_gmt7,
+  datetime(r.createdAt,'Asia/Ho_Chi_Minh') as createdAt_gmt7,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField02') as qrcode_id,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField04') as qrcode_campaignid,
+  r.systemName
+FROM (
+        SELECT ARRAY_AGG(o ORDER BY o.recordAt DESC LIMIT 1)[OFFSET(0)] AS r
+        FROM `tuborg-vietnam.pangocdp_data.02_Watera_2907_Ticket_Register_GS25` o
+        GROUP BY o.id)
+       
+View_golden_asia_run_2023_qrredeem:
+SELECT
+  JSON_EXTRACT_SCALAR(r.csFields, '$.zoUId') as zoUId,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField05') as zuappid,
+  r.phone,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField03') as fullname,
+
+
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField10') as pg_phone,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField11') as pg_name,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField02') as qrcode_id,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField13') as qrcode_status,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField04') as qrcode_campaignid,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField15') as cdpapp_id,
+
+
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField07') as utm_source,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField08') as utm_medium,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField09') as utm_campaign,
+  datetime(r.modelCreatedAt,'Asia/Ho_Chi_Minh') as modelCreatedAt_gmt7,
+  datetime(r.createdAt,'Asia/Ho_Chi_Minh') as createdAt_gmt7,
+ 
+  r.systemName
+FROM (
+        SELECT ARRAY_AGG(o ORDER BY o.recordAt DESC LIMIT 1)[OFFSET(0)] AS r
+        FROM `tuborg-vietnam.pangocdp_data.03_Golden_Asia_Run_2023_QR_Reddeem` o
+        where o.createdAt >= '2023-08-19'
+        GROUP BY o.id)
+       
+View_golden_register:
+SELECT
+  JSON_EXTRACT_SCALAR(r.csFields, '$.zoUId') as zoUId,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField05') as zoappid,
+  r.phone,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField03') as fullname,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldLong01') as yob,
+  CAST(EXTRACT(YEAR FROM CURRENT_DATE('Asia/Ho_Chi_Minh')) AS INT64) - CAST(JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldLong01') as INT64) as Age,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldBoolean01') as optin_consent,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField07') as utm_source,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField08') as utm_medium,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField09') as utm_campaign,
+  r.eventCtg,
+  r.event,
+  datetime(r.modelCreatedAt,'Asia/Ho_Chi_Minh') as modelCreatedAt_gmt7,
+  datetime(r.createdAt,'Asia/Ho_Chi_Minh') as createdAt_gmt7,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField02') as qrcodeid,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField04') as qrcode_campaignid,
+  r.systemName
+FROM (
+        SELECT ARRAY_AGG(o ORDER BY o.recordAt DESC LIMIT 1)[OFFSET(0)] AS r
+        FROM `tuborg-vietnam.pangocdp_data.03_Golden_Asia_Run_2023_Register` o
+        GROUP BY o.id)
+       
+View_golden_asia_run_report:
+select distinct
+  a.zoappid,
+  a.zoUId,
+  a.phone,
+  a.fullname,
+  a.yob,
+  a.Age,
+ case when a.Age between 0 and 24 then '18-24'
+       when a.Age between 25 and 34 then '25-34'
+       when a.Age between 35 and 44 then '35-44'
+       when a.Age between 45 and 54 then '45-54'
+       when a.Age between 55 and 64 then '55-64'
+       else 'Above 65' end as ageRange,
+case when b.qrcode_status = 'used' then 'code redeem' else null end as qrcodeidnew,
+  a.utm_source,
+  a.utm_medium,
+  a.utm_campaign,
+  a.createdAt_gmt7 as registered_At,
+  a.qrcodeid,
+  a.qrcode_campaignid,
+  a.optin_consent,
+  IFNULL(b.qrcode_status,'issued') as qrcode_status,
+  b.createdAt_gmt7 as redeem_at,
+  b.pg_phone,
+  b.pg_name,
+  b.qrcode_id as codereddeem
+
+
+FROM `tuborg-vietnam.for_reporting.03_Golden_Asia_Run_2023_Register` a
+full JOIN `tuborg-vietnam.for_reporting.03_Golden_Asia_Run_2023_QR_Reddeem` b ON a.qrcodeid = b.qrcode_id and b.zoUId = a.zoUId
+WHERE a.utm_source is not null and a.createdAt_gmt7 >= '2023-08-19'
+
+
+View_hozo_qrredeem:
+SELECT
+  JSON_EXTRACT_SCALAR(r.csFields, '$.zoUId') as zoUId,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField05') as zuappid,
+  r.phone,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField03') as fullname,
+
+
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField10') as pg_phone,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField11') as pg_name,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField02') as qrcode_id,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField13') as qrcode_status,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField04') as qrcode_campaignid,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField15') as cdpapp_id,
+
+
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField07') as utm_source,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField08') as utm_medium,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField09') as utm_campaign,
+  datetime(r.modelCreatedAt,'Asia/Ho_Chi_Minh') as modelCreatedAt_gmt7,
+  datetime(r.createdAt,'Asia/Ho_Chi_Minh') as createdAt_gmt7,
+ 
+  r.systemName
+FROM (
+        SELECT ARRAY_AGG(o ORDER BY o.recordAt DESC LIMIT 1)[OFFSET(0)] AS r
+        FROM `tuborg-vietnam.pangocdp_data.04_Hozo_Redeem` o
+        where o.createdAt >= '2023-08-19'
+        GROUP BY o.id)
+View_hozo_register:
+SELECT
+  JSON_EXTRACT_SCALAR(r.csFields, '$.zoUId') as zoUId,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField05') as zoappid,
+  r.phone,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField03') as fullname,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldLong01') as yob,
+  CAST(EXTRACT(YEAR FROM CURRENT_DATE('Asia/Ho_Chi_Minh')) AS INT64) - CAST(JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldLong01') as INT64) as Age,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldBoolean01') as optin_consent,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField07') as utm_source,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField08') as utm_medium,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField09') as utm_campaign,
+  r.eventCtg,
+  r.event,
+  datetime(r.modelCreatedAt,'Asia/Ho_Chi_Minh') as modelCreatedAt_gmt7,
+  datetime(r.createdAt,'Asia/Ho_Chi_Minh') as createdAt_gmt7,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField02') as qrcodeid,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField04') as qrcode_campaignid,
+  r.systemName
+FROM (
+        SELECT ARRAY_AGG(o ORDER BY o.recordAt DESC LIMIT 1)[OFFSET(0)] AS r
+        FROM `tuborg-vietnam.pangocdp_data.04_Hozo_Register` o
+        GROUP BY o.id)
+View_hozo_report:
+
+select distinct
+  a.zoappid,
+  a.zoUId,
+  a.phone,
+  a.fullname,
+  a.yob,
+  a.Age,
+ case when a.Age between 0 and 24 then '18-24'
+       when a.Age between 25 and 34 then '25-34'
+       when a.Age between 35 and 44 then '35-44'
+       when a.Age between 45 and 54 then '45-54'
+       when a.Age between 55 and 64 then '55-64'
+       else 'Above 65' end as ageRange,
+case when b.qrcode_status = 'used' then 'code redeem' else null end as qrcodeidnew,
+  a.utm_source,
+  a.utm_medium,
+  a.utm_campaign,
+  a.createdAt_gmt7 as registered_At,
+  a.qrcodeid,
+  a.qrcode_campaignid,
+  a.optin_consent,
+  IFNULL(b.qrcode_status,'issued') as qrcode_status,
+  b.createdAt_gmt7 as redeem_at,
+  b.pg_phone,
+  b.pg_name,
+  b.qrcode_id as codereddeem
+
+
+FROM `tuborg-vietnam.for_reporting.04_Hozo_register` a
+full JOIN `tuborg-vietnam.for_reporting.04_Hozo_redeem_qr` b ON a.qrcodeid = b.qrcode_id and b.zoUId = a.zoUId
+WHERE a.utm_source is not null and a.createdAt_gmt7 >='2023-09-23T10:00:00'
+
+
+View_hozo_arshooter_result:
+with result as
+(    select distinct
+    r.phone,
+    datetime(r.createdAt,'Asia/Ho_Chi_Minh') as createdAt_gmt7,
+    JSON_EXTRACT_SCALAR(r.csFields, '$.zoUId') as zouID,
+    JSON_EXTRACT_SCALAR(r.csFields, '$.customField01') as name,
+    JSON_EXTRACT_SCALAR(r.csFields, '$.customField02') as resulttype,
+    JSON_EXTRACT_SCALAR(r.csFields, '$.customField03') as utm_source,
+    JSON_EXTRACT_SCALAR(r.csFields, '$.customField04') as utm_medium,
+    JSON_EXTRACT_SCALAR(r.csFields, '$.customField05') as utm_campaign,
+    JSON_EXTRACT_SCALAR(r.csFields, '$.customField07') as Qrcode,
+    JSON_EXTRACT_SCALAR(r.csFields, '$.customField08') as sent,
+    JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldLong01') as point
+  from `tuborg-vietnam.pangocdp_data.05_Hozo_ARshooter` r
+  where datetime(r.createdAt,'Asia/Ho_Chi_Minh')>='2023-09-23'
+)
+SELECT
+a.createdAt_gmt7,
+a.name,
+a.zouID,
+a.resulttype,
+a.utm_campaign,
+a.utm_medium,
+a.utm_source,
+a.Qrcode,
+a.point,
+a.phone,
+b.createdAt_gmt7 as redeemAt,
+b.finalgiftname,
+b.fullname,b.phone as cusphone,
+b.PG_name,
+b.qrcode_id as coderedeem,
+b.pg_phone,
+  IFNULL(b.qrcode_status,'issued') as qrcode_status,
+case when finalgiftname ='Combo 2 lon Tuborg ICE' then 'Túi Tuborg' else b.finalgiftname end as giffname,
+case when b.qrcode_status = 'used' then 'code redeem' else null end as qrcodeidnew,
+FROM result a
+left  join `tuborg-vietnam.for_reporting.05_Hozo_redeem_game` b  on b.qrcode_id = a.Qrcode
+--where a.Qrcode is not null --and b.qrredeem is not nullqrredeem
+--order by b.qrredeem asc
+
+
+View_hozo_redeem_game:
+SELECT
+  JSON_EXTRACT_SCALAR(r.csFields, '$.zoUId') as zoUId,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField05') as zuappid,
+  r.phone,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField03') as fullname,
+
+
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField10') as pg_phone,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField11') as pg_name,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField02') as qrcode_id,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField13') as qrcode_status,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField04') as qrcode_campaignid,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField15') as cdpapp_id,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField12') as finalgiftname,
+
+
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField07') as utm_source,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField08') as utm_medium,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField09') as utm_campaign,
+  datetime(r.modelCreatedAt,'Asia/Ho_Chi_Minh') as modelCreatedAt_gmt7,
+  datetime(r.createdAt,'Asia/Ho_Chi_Minh') as createdAt_gmt7,
+ 
+  r.systemName
+FROM (
+        SELECT ARRAY_AGG(o ORDER BY o.recordAt DESC LIMIT 1)[OFFSET(0)] AS r
+        FROM `tuborg-vietnam.pangocdp_data.05_Hozo_redeem_ARshooter` o
+        where o.createdAt >= '2023-08-19'
+        GROUP BY o.id)
+       
+View_hozo_total_play:
+with result as
+(    select 
+    r.phone,
+    datetime(r.createdAt,'Asia/Ho_Chi_Minh') as createdAt_gmt7,
+    JSON_EXTRACT_SCALAR(r.csFields, '$.zoUId') as zouID,
+    JSON_EXTRACT_SCALAR(r.csFields, '$.customField01') as name,
+    JSON_EXTRACT_SCALAR(r.csFields, '$.customField02') as resulttype,
+    JSON_EXTRACT_SCALAR(r.csFields, '$.customField03') as utm_source,
+    JSON_EXTRACT_SCALAR(r.csFields, '$.customField04') as utm_medium,
+    JSON_EXTRACT_SCALAR(r.csFields, '$.customField05') as utm_campaign,
+    JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldLong01') as point
+  from `tuborg-vietnam.pangocdp_data.05_Hozo_ARShooter` r
+)
+select 
+date(result.createdAt_gmt7)as timeplay,
+result.name,
+count(result.zouID)as totalplay
+from result
+group by phone,zouID,name,resulttype,point,createdAt_gmt7
+order by result.name
+
+View_hozo_2app:
+with sampling as (
+select
+
+
+eventName,
+zoaUserName,
+zoaUserId,
+phone,
+zaloUserAppId,
+eventAt
+
+
+FROM `tuborg-vietnam.for_reporting.zma_log` R  where eventName ='generate-qr' and cdpAppId ='8d261536e37dc1466e558cee81a264dc-1694963610210'  and eventAt >='2023-09-23'
+),
+
+
+Game as (
+select
+phone as sdt,
+eventName,
+'' as test,
+zoaUserName,
+zoaUserId,
+zaloUserAppId,
+eventAt
+
+
+FROM `tuborg-vietnam.for_reporting.zma_log` R  where  eventName ='play-game' and cdpAppId ='6830b47bcbaf2ca9f3238d7a74116a90-1695115793701'  and eventAt >='2023-09-23'
+
+
+
+
+
+
+)
+
+
+select  
+s.eventName,
+s.phone,
+s.zoaUserName,
+s.zoaUserId,
+s.zaloUserAppId,
+s.eventAt,
+g.eventName as eventgame,
+g.zoaUserName as namegame,
+g.zoaUserId as useridgame,
+g.zaloUserAppId as zaloUserAppIdgame ,
+g.test,
+g.eventAt as eventatgame
+ from sampling S
+left  join game G on G.zoaUserId =S.ZoaUserId  
+where G.eventname is not null
+
+
+View_hozo_survey_submit:
+with surveydata as(
+SELECT
+    JSON_EXTRACT(r.eventData, '$.surveyData') as surveydata,
+    r.id,
+    r.cdpAppId,
+    r.zaloAppId,
+    r.zaloUserAppId,
+    r.zoaId,
+    r.eventName,
+    datetime(r.eventAt,'Asia/Ho_Chi_Minh') as eventAt,
+    case when r.zoaUserId = '' then null else r.zoaUserId end as zoaUserId,
+    r.zoaUserName,
+    case when r.phone = '' then null else r.phone end as phone,
+
+
+FROM (
+        SELECT ARRAY_AGG(o ORDER BY o.recordAt DESC LIMIT 1)[OFFSET(0)] AS r
+        FROM `tuborg-vietnam.pangocdp_data.zma_log` o
+        -- where cdpAppId ='6830b47bcbaf2ca9f3238d7a74116a90-1695115793701' and eventName ='submit-survey'
+       WHERE datetime(o.eventAt,'Asia/Ho_Chi_Minh')>='2023-09-23'
+         GROUP BY o.id)
+        group by r.zoaUserId, r.id,
+    r.cdpAppId,
+    r.zaloAppId,
+    r.zaloUserAppId,
+    r.zoaId,
+    r.eventName,JSON_EXTRACT(r.eventData, '$.surveyData'),datetime(r.eventAt,'Asia/Ho_Chi_Minh'),r.zoaUserName,phone
+)
+select *,
+    JSON_EXTRACT_SCALAR(a.surveyData, '$.questionCode') as questionCode,
+    JSON_EXTRACT_SCALAR(a.surveyData, '$.question') as question,
+    -- JSON_EXTRACT_SCALAR(a.surveyData, '$.user_answer') as user_answer,
+    -- JSON_EXTRACT_SCALAR(REPLACE(REPLACE(TRIM(surveyData),'[',''),']',''), '$.user_answers') as user_answers,
+-- (IF(LENGTH(JSON_EXTRACT_SCALAR(REPLACE(REPLACE(TRIM(surveyData),'[',''),']',''), '$.user_answers') )=0,'null', JSON_EXTRACT_SCALAR(REPLACE(REPLACE(TRIM(surveyData),'[',''),']',''), '$.user_answers'))),
+
+
+    -- case when (IF(LENGTH(JSON_EXTRACT_SCALAR(REPLACE(REPLACE(TRIM(surveyData),'[',''),']',''), '$.user_answers') )=0,'null', JSON_EXTRACT_SCALAR(REPLACE(REPLACE(TRIM(surveyData),'[',''),']',''), '$.user_answers'))) is null  then JSON_EXTRACT_SCALAR(a.surveyData, '$.user_answer') else JSON_EXTRACT_SCALAR(a.surveyData, '$.user_answers') end as tl,
+
+
+
+
+CASE WHEN (IF(LENGTH(JSON_EXTRACT_SCALAR(a.surveyData, '$.user_answer'))=0,NULL, JSON_EXTRACT_SCALAR(a.surveyData, '$.user_answer'))) IS NULL THEN (IF(LENGTH(JSON_EXTRACT_SCALAR(REPLACE(REPLACE(TRIM(surveyData),'[',''),']',''), '$.user_answers') )=0,'null', JSON_EXTRACT_SCALAR(REPLACE(REPLACE(TRIM(surveyData),'[',''),']',''), '$.user_answers'))) ELSE (IF(LENGTH(JSON_EXTRACT_SCALAR(a.surveyData, '$.user_answer'))=0,NULL, JSON_EXTRACT_SCALAR(a.surveyData, '$.user_answer'))) END AS TL
+
+
+
+
+
+
+
+
+
+
+
+
+from surveydata a
+-- where JSON_EXTRACT_SCALAR(a.surveyData, '$.questionCode') = 'code6'
+--where JSON_EXTRACT_SCALAR(a.surveyData, '$.questionCode') is not null
+
+
+View_ravo_arshooter:
+with realdata as(
+   select distinct
+    r.phone,
+    datetime(r.createdAt,'Asia/Ho_Chi_Minh') as createdAt_gmt7,
+    JSON_EXTRACT_SCALAR(r.csFields, '$.zoUId') as zouID,
+    JSON_EXTRACT_SCALAR(r.csFields, '$.customField01') as name,
+    JSON_EXTRACT_SCALAR(r.csFields, '$.customField02') as resulttype,
+    JSON_EXTRACT_SCALAR(r.csFields, '$.customField03') as utm_source,
+    JSON_EXTRACT_SCALAR(r.csFields, '$.customField04') as utm_medium,
+    JSON_EXTRACT_SCALAR(r.csFields, '$.customField05') as utm_campaign,
+    JSON_EXTRACT_SCALAR(r.csFields, '$.customField07') as Qrcode,
+    JSON_EXTRACT_SCALAR(r.csFields, '$.customField08') as sent,
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField09') as zoauid,
+    JSON_EXTRACT_SCALAR(r.csFields, '$.customField10') as gift,
+    JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldLong01') as point
+  from `tuborg-vietnam.pangocdp_data.06_Ravo_GameARShooter_Result` r
+   )
+
+
+  -- where datetime(r.createdAt,'Asia/Ho_Chi_Minh')>='2023-09-23'
+
+
+select t0.*,
+concat(left(t0.phone,5),'*****') as hidephone,
+qrcode_id,
+qrcode_status,
+pg_name,
+giftname,
+t1.createdAt_gmt7 as redeemdate
+from realdata t0
+ left join tuborg-vietnam.for_reporting.06_Watera_Ravo_Redeem t1 on t0.qrcode = t1.qrcode_id and t0.zouid =t1.zouid and t1.utm_campaign=t0.utm_campaign
+-- where t1.utm_campaign='ARShooter_RavoDec'
+where t0.createdAt_gmt7 between '2023-12-03T07:00:00' and '2023-12-03T23:59:59'
+
+
+
+
+View_ravo_surveysubmit:
+with surveydata as(
+SELECT
+    JSON_EXTRACT(r.eventData, '$.surveyData') as surveydata,
+    r.id,
+    r.cdpAppId,
+    r.zaloAppId,
+    r.zaloUserAppId,
+    r.zoaId,
+    r.eventName,
+    datetime(r.eventAt,'Asia/Ho_Chi_Minh') as eventAt,
+    case when r.zoaUserId = '' then null else r.zoaUserId end as zoaUserId,
+    r.zoaUserName,
+    case when r.phone = '' then null else r.phone end as phone,
+
+
+FROM (
+        SELECT ARRAY_AGG(o ORDER BY o.recordAt DESC LIMIT 1)[OFFSET(0)] AS r
+        FROM `tuborg-vietnam.pangocdp_data.zma_log` o
+       WHERE datetime(o.eventAt,'Asia/Ho_Chi_Minh')>='2023-12-03'
+         GROUP BY o.id)
+         WHERE r.cdpappid ='6830b47bcbaf2ca9f3238d7a74116a90-1695115793701'
+        group by r.zoaUserId, r.id,
+    r.cdpAppId,
+    r.zaloAppId,
+    r.zaloUserAppId,
+    r.zoaId,
+    r.eventName,JSON_EXTRACT(r.eventData, '$.surveyData'),datetime(r.eventAt,'Asia/Ho_Chi_Minh'),r.zoaUserName,phone
+)
+select *,
+    JSON_EXTRACT_SCALAR(a.surveyData, '$.questionCode') as questionCode,
+    JSON_EXTRACT_SCALAR(a.surveyData, '$.question') as question,
+
+
+CASE WHEN (IF(LENGTH(JSON_EXTRACT_SCALAR(a.surveyData, '$.user_answer'))=0,NULL,
+JSON_EXTRACT_SCALAR(a.surveyData, '$.user_answer'))) IS NULL THEN (IF(LENGTH(JSON_EXTRACT_SCALAR(REPLACE(REPLACE(TRIM(surveyData),'[',''),']',''), '$.user_answers') )=0,'null', JSON_EXTRACT_SCALAR(REPLACE(REPLACE(TRIM(surveyData),'[',''),']',''), '$.user_answers'))) ELSE (IF(LENGTH(JSON_EXTRACT_SCALAR(a.surveyData, '$.user_answer'))=0,NULL, JSON_EXTRACT_SCALAR(a.surveyData, '$.user_answer'))) END AS TL
+from surveydata a
+where eventAt between '2023-12-03T07:00:00' and '2023-12-03T23:59:59'
+ View_ravo_butl:
+with realdata as (
+   select distinct
+    r.phone,
+    datetime(r.createdAt,'Asia/Ho_Chi_Minh') as createdAt_gmt7,
+    JSON_EXTRACT_SCALAR(r.csFields, '$.zoUId') as zouID,
+
+
+    JSON_EXTRACT_SCALAR(r.csFields, '$.customField02') as Qrcode,
+    JSON_EXTRACT_SCALAR(r.csFields, '$.customField03') as fullname,
+    JSON_EXTRACT_SCALAR(r.csFields, '$.customField06') as phonedata,
+    JSON_EXTRACT_SCALAR(r.csFields, '$.customField07') as utm_source,
+    JSON_EXTRACT_SCALAR(r.csFields, '$.customField08') as utm_medium,
+    JSON_EXTRACT_SCALAR(r.csFields, '$.customField09') as utm_campaign,
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField09') as zoauid,
+    JSON_EXTRACT_SCALAR(r.csFields, '$.customField10') as VipVoucherCode,
+    JSON_EXTRACT_SCALAR(r.csFields, '$.customField11') as VoucherCar50K,
+    JSON_EXTRACT_SCALAR(r.csFields, '$.customField12') as VoucherBike50K,
+  CAST(EXTRACT(YEAR FROM CURRENT_DATE('Asia/Ho_Chi_Minh')) AS INT64) - CAST(JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldLong01') as INT64) as Age,
+  case when JSON_EXTRACT_SCALAR(r.csFields, '$.customField11') is NOT null then 'Car50K'
+  when JSON_EXTRACT_SCALAR(r.csFields, '$.customField12') is NOT null then 'Bike50K'
+   end as type,
+    JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldLong01') as point
+  from `tuborg-vietnam.pangocdp_data.06_Ravo_BUTL` r )
+
+
+  select t0.*,
+  concat(left(t0.phone,5),'*****') as hidephone,
+qrcode_id,
+qrcode_status,
+pg_name,
+substring(giftname,27,32) as giftname
+,
+t1.createdAt_gmt7 as redeemdate
+from realdata t0
+ left join tuborg-vietnam.for_reporting.06_Watera_Ravo_Redeem t1 on t0.qrcode = t1.qrcode_id and t0.zouid =t1.zouid and t1.utm_campaign=t0.utm_campaign
+where t0.createdAt_gmt7 between '2023-12-03T07:00:00' and '2023-12-03T23:59:59'
+
+
+ View_watera_newfl:
+select *
+from tuborg-vietnam.for_reporting.zma_log
+where cdpappid = 'd1451c612020a9a07145fd0ea826163e-1700215772944'
+and eventat between '2023-11-25T08:00:00' and '2023-11-26T23:59:59'
+and eventname ='submit'
+union all
+select *
+from tuborg-vietnam.for_reporting.zma_log
+where cdpappid = '6830b47bcbaf2ca9f3238d7a74116a90-1695115793701'
+and eventat <= '2023-12-03'
+and eventname ='submit'
+union all
+select *
+from tuborg-vietnam.for_reporting.zma_log
+where cdpappid = '28fcda35df9a1dfb21f0dd594411ff9e-1701054936183'
+and eventat <= '2023-12-03'
+and eventname ='submit'
+
+
+View_watera_ravo_redeem:
+SELECT
+  JSON_EXTRACT_SCALAR(r.csFields, '$.zoUId') as zoUId,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField05') as zuappid,
+  r.phone,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField03') as fullname,
+
+
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField10') as pg_phone,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField11') as pg_name,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField02') as qrcode_id,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField13') as qrcode_status,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField04') as qrcode_campaignid,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField15') as cdpapp_id,
+ JSON_EXTRACT_SCALAR(r.csFields, '$.customField12') as giftname,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField07') as utm_source,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField08') as utm_medium,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField09') as utm_campaign,
+JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldLong02') as total_item,
+
+
+JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldLong04') as totalAmount ,
+
+
+
+
+
+
+
+
+  datetime(r.modelCreatedAt,'Asia/Ho_Chi_Minh') as modelCreatedAt_gmt7,
+  datetime(r.createdAt,'Asia/Ho_Chi_Minh') as createdAt_gmt7,
+ 
+  r.systemName
+FROM (
+        SELECT ARRAY_AGG(o ORDER BY o.recordAt DESC LIMIT 1)[OFFSET(0)] AS r
+        FROM `tuborg-vietnam.pangocdp_data.06_Ravo_QR_redeem` o
+        GROUP BY o.id)
+View_watera_ravo_register:
+SELECT
+  JSON_EXTRACT_SCALAR(r.csFields, '$.zoUId') as zoUId,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField05') as zuappid,
+  r.phone,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField03') as fullname,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldLong01') as yob,
+  CAST(EXTRACT(YEAR FROM CURRENT_DATE('Asia/Ho_Chi_Minh')) AS INT64) - CAST(JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldLong01') as INT64) as Age,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldBoolean01') as optin_consent,
+
+
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField07') as utm_source,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField08') as utm_medium,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField09') as utm_campaign,
+  r.eventCtg,
+  r.event,
+  datetime(r.modelCreatedAt,'Asia/Ho_Chi_Minh') as modelCreatedAt_gmt7,
+  datetime(r.createdAt,'Asia/Ho_Chi_Minh') as createdAt_gmt7,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField02') as qrcode_id,
+  JSON_EXTRACT_SCALAR(r.csFields, '$.customField04') as qrcode_campaignid,
+  r.systemName
+FROM (
+        SELECT ARRAY_AGG(o ORDER BY o.recordAt DESC LIMIT 1)[OFFSET(0)] AS r
+        FROM `tuborg-vietnam.pangocdp_data.06_Ravo_RegisterTicket_GS25` o
+        GROUP BY o.id)
+       
+View_zminiapplog:
+with zmalog as(
+SELECT
+    r.id,
+    r.cdpAppId,
+    r.zaloAppId,
+    r.zaloUserAppId,
+    r.zoaUserId,
+    r.zoaId,
+   --  case when r.zoaUserId = '' then null else r.zoaUserId end as zoaUserId,
+    r.zoaUserName,
+    case when r.phone = '' then null else r.phone end as phone,
+    r.eventTrigger,
+    r.eventName,
+    datetime(r.eventAt,'Asia/Ho_Chi_Minh') as eventAt,
+    case when r.utmSource = '' or r.utmSource is null then 'direct' else r.utmSource end as utmSource,
+    case when r.utmMedium = '' or r.utmMedium is null then 'none' else r.utmMedium end as utmMedium,
+    case when r.utmCampaign = '' or r.utmCampaign is null then 'not set' else r.utmCampaign end as utmCampaign,
+--  case when date(datetime(r.eventAt,'Asia/Ho_Chi_Minh')) =  min(date(datetime(r.eventAt,'Asia/Ho_Chi_Minh')))over(partition by r.phone) then true else false end as IsNewData,
+
+
+ case when date(datetime(r.eventAt,'Asia/Ho_Chi_Minh')) =  min(date(datetime(r.eventAt,'Asia/Ho_Chi_Minh')))over(partition by r.zaloUserAppId) then true else false end as IsNewData,
+
+
+    case when
+    ((r.eventname='open-app'or r.eventname='allow-phone' )  
+    and r.zoauserid ='')
+    and (r.cdpappid ='28fcda35df9a1dfb21f0dd594411ff9e-1701054936183'
+     or r.cdpappid ='d1451c612020a9a07145fd0ea826163e-1700215772944'
+     or r.cdpappid ='2d051362527fee516aff79dd150db73c-1701054962528')
+        then '1' else r.cdpappid end as countnew,
+  CASE WHEN R.CDPAPPID ='1f4e5f456ae78fd88a703a703bb4c46e-1692239074464' THEN 'GOLDEN ASIA RUN 2023'
+WHEN R.CDPAPPID ='20b22f15956e35872e6474c39dc1b4be-1689047844145' THEN 'Tuborg Scan'
+WHEN R.CDPAPPID ='2609c057b191402870d8dc9d9684875e-1689045035896' THEN 'WATER RUN 2023'
+WHEN R.CDPAPPID ='28fcda35df9a1dfb21f0dd594411ff9e-1701054936183' THEN 'BUTL-VIP'
+WHEN R.CDPAPPID ='2d051362527fee516aff79dd150db73c-1701054962528' THEN 'BUTL-GAMEZONE'
+WHEN R.CDPAPPID ='63cbd727206af8ff2bf9259edeefad76-1690383854813' THEN 'HOZO TICKET CVS'
+WHEN R.CDPAPPID ='6830b47bcbaf2ca9f3238d7a74116a90-1695115793701' THEN 'Thợ săn Tuborg'
+WHEN R.CDPAPPID ='8d261536e37dc1466e558cee81a264dc-1694963610210' THEN 'EVENT HOZO 2023'
+WHEN R.CDPAPPID ='d1451c612020a9a07145fd0ea826163e-1700215772944' THEN 'Ravolution Festival'
+WHEN R.CDPAPPID ='f284045aae8c3c4957d31a9e11673b8f-1689645807383' THEN 'WATERA FESTIVAL'
+END AS CAMPAIGNNAME,
+    r.cid,
+    r.tid,
+FROM (
+        SELECT ARRAY_AGG(o ORDER BY o.recordAt DESC LIMIT 1)[OFFSET(0)] AS r
+        FROM `tuborg-vietnam.pangocdp_data.zma_log` o
+        GROUP BY o.id))
+
+
+        SELECT * FROM zmalog
+        where cdpappid ='d1451c612020a9a07145fd0ea826163e-1700215772944'
+        and eventat between '2023-11-25T08:00:00' and '2023-11-26T23:59:59'
+        union all
+         SELECT * FROM zmalog
+        where cdpappid ='6830b47bcbaf2ca9f3238d7a74116a90-1695115793701'
+        and eventat between '2023-12-03T15:00:00' and '2023-12-03T23:59:59'
+         union all
+         SELECT * FROM zmalog
+        where cdpappid ='28fcda35df9a1dfb21f0dd594411ff9e-1701054936183'
+        and eventat between '2023-12-03T15:00:00' and '2023-12-03T23:59:59'
+
+
+View_watera_ravo_report:
+SELECT
+  a.zuappid,
+  a.zoUId,
+  a.phone,
+  a.fullname,
+  a.yob,
+  a.Age,
+  case when a.Age between 0 and 24 then '18-24'
+       when a.Age between 25 and 34 then '25-34'
+       when a.Age between 35 and 44 then '35-44'
+       when a.Age between 45 and 54 then '45-54'
+       when a.Age between 55 and 64 then '55-64'
+       else 'Above 65' end as ageRange,
+  a.optin_consent,
+  case when a.utm_source = 'VN0005' then 'Nguyễn Hữu Cảnh'
+  when a.utm_source = 'VN0062' then 'Thảo Điền'
+  when a.utm_source = 'VN0083' then 'Nowzone'
+  when a.utm_source = 'VN0195' then 'Nguyễn Văn Trỗi' end as utm_source,
+  a.utm_medium,
+  a.utm_campaign,
+  a.createdAt_gmt7 as registered_At,
+
+
+  a.qrcode_id,
+  a.qrcode_campaignid,
+  IFNULL(b.qrcode_status,'issued') as qrcode_status,
+  b.createdAt_gmt7 as redeem_at,
+  b.pg_phone,
+  b.pg_name,
+  b.giftname,
+  b.totalAmount,
+  b.total_item
+FROM `tuborg-vietnam.for_reporting.06_Watera_Ravo_Register` a
+LEFT JOIN `tuborg-vietnam.for_reporting.06_Watera_Ravo_Redeem` b ON a.qrcode_id = b.qrcode_id
+where a.createdAt_gmt7 >='2023-11-25T08:00:00'
+and b.createdAt_gmt7 >='2023-11-25T08:00:00'
+
+
+View_zminiapplog:
+-- with zmalog as(
+SELECT
+    r.id,
+    r.cdpAppId,
+    r.zaloAppId,
+    r.zaloUserAppId,
+    r.zoaId,
+    case when r.zoaUserId = '' then null else r.zoaUserId end as zoaUserId,
+    r.zoaUserName,
+    case when r.phone = '' then null else r.phone end as phone,
+    r.eventTrigger,
+    r.eventName,
+    datetime(r.eventAt,'Asia/Ho_Chi_Minh') as eventAt,
+    case when r.utmSource = '' or r.utmSource is null then 'direct' else r.utmSource end as utmSource,
+    case when r.utmMedium = '' or r.utmMedium is null then 'none' else r.utmMedium end as utmMedium,
+    case when r.utmCampaign = '' or r.utmCampaign is null then 'not set' else r.utmCampaign end as utmCampaign,
+ case when date(datetime(r.eventAt,'Asia/Ho_Chi_Minh')) =  min(date(datetime(r.eventAt,'Asia/Ho_Chi_Minh')))over(partition by r.phone) then true else false end as IsNewData,
+    case when
+    ((r.eventname='open-app'or r.eventname='allow-phone' )  
+    and r.zoauserid ='')
+    and (r.cdpappid ='28fcda35df9a1dfb21f0dd594411ff9e-1701054936183'
+     or r.cdpappid ='d1451c612020a9a07145fd0ea826163e-1700215772944'
+     or r.cdpappid ='2d051362527fee516aff79dd150db73c-1701054962528')
+        then '1' else r.cdpappid end as countnew,
+  CASE WHEN R.CDPAPPID ='1f4e5f456ae78fd88a703a703bb4c46e-1692239074464' THEN 'GOLDEN ASIA RUN 2023'
+WHEN R.CDPAPPID ='20b22f15956e35872e6474c39dc1b4be-1689047844145' THEN 'Tuborg Scan'
+WHEN R.CDPAPPID ='2609c057b191402870d8dc9d9684875e-1689045035896' THEN 'WATER RUN 2023'
+WHEN R.CDPAPPID ='28fcda35df9a1dfb21f0dd594411ff9e-1701054936183' THEN 'BUTL-VIP'
+WHEN R.CDPAPPID ='2d051362527fee516aff79dd150db73c-1701054962528' THEN 'BUTL-GAMEZONE'
+WHEN R.CDPAPPID ='63cbd727206af8ff2bf9259edeefad76-1690383854813' THEN 'HOZO TICKET CVS'
+WHEN R.CDPAPPID ='6830b47bcbaf2ca9f3238d7a74116a90-1695115793701' THEN 'Thợ săn Tuborg'
+WHEN R.CDPAPPID ='8d261536e37dc1466e558cee81a264dc-1694963610210' THEN 'EVENT HOZO 2023'
+WHEN R.CDPAPPID ='d1451c612020a9a07145fd0ea826163e-1700215772944' THEN 'Ravolution Festival'
+WHEN R.CDPAPPID ='f284045aae8c3c4957d31a9e11673b8f-1689645807383' THEN 'WATERA FESTIVAL'
+END AS CAMPAIGNNAME,
+    r.cid,
+    r.tid,
+FROM (
+        SELECT ARRAY_AGG(o ORDER BY o.recordAt DESC LIMIT 1)[OFFSET(0)] AS r
+        FROM `tuborg-vietnam.pangocdp_data.zma_log` o
+        GROUP BY o.id)
+-- where r.cdpappid='28fcda35df9a1dfb21f0dd594411ff9e-1701054936183'
+-- and r.phone ='0906752767'
+--  where r.eventname ='use-qr'
+
+
+
+
+
+
+
+
+
+
+

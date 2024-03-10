@@ -1,0 +1,482 @@
+View_zminiapplog:
+With data1 as(
+       SELECT r.*,
+case when r.cdpAppId ="e4f79b4e8872640c45486766ab9992ba-1699928320615" then "Pre-Booking Specific"--generate-qr
+when r.cdpAppId ="c4c224dd0106b51cd62e92cfe7408183-1698828742473" then "Pre-Booking Specific"--generate-qr
+when r.cdpAppId ="11a3b6106bfeacc615390b311e4dd422-1697614037060" then "Pre-Booking Specific"--generate-qr
+when r.cdpAppId ="89dd930a8cbf9969e4dddbd28c920fb4-1695195500267" then "Pre-Booking Specific" --generate-qr
+when r.cdpAppId ="f24c0d35cc21d50c79b01a85187765ae-1694076032489" then "Pre-Booking Mass"--generate-qr
+
+
+--Flagship Sampling
+when r.cdpAppId ="63f650d576103ce65630485e11d01d53-1696826756902" then "Chim Rừng Sampling Flagship" --generate-qr
+when r.cdpAppId ="368f9ecb6404e89f034ec04b476f3f40-1697700641119" then "Sampling Flagship"--generate-qr
+when r.cdpAppId = "6d5a9ccebdaf30199bc5d2b0b5515510-1696388026190" then "Welcome to Carlsberg Celebration Hub Flagship" -- submit
+when r.cdpAppId = "c7c0923d4abd1588e65d214f32efd932-1696826471414" then "Nam Bộ Sampling Flagship"--generate-qr
+when r.cdpAppId ="f5a8a706f56ce5d6c2c63e92cf1fd621-1696825675612" then "Mùa Vàng Sampling Flagship" --generate-qr
+when r.cdpAppId ="01099c687fc4f1e7ac82c127c8a6641d-1693996998250" then "Phi Phố Biển Sampling Flagship" --generate-qr
+
+
+when r.cdpAppId ="5da52f8cd32566a99cd1e1794040ad7d-1694681158339" then "Quét QR Nhận Mã Rút Thăm" -- submit
+when r.cdpAppId ="2b34500fd0c2856584ac7c06d4282c1b-1694664952722" then "Carlsberg Best Beer Hunt" --play-result
+
+
+--Commando
+
+
+when r.cdpAppId ="a4fc4f14d24f5aba38a58a813e57ed8f-1697691458523" then "Welcome to Carlsberg Celebration Hub commando" -- submit
+when r.cdpAppId ="551a207ad0e18c47d3805b85ebc2d146-1694076099952" then "Sampling Commando"--generate-qr
+
+
+
+
+end as cdpappid_v2,r.utmSource as utm_source,
+
+
+ datetime(r.  
+eventAt, 'Asia/Ho_Chi_Minh') as createdAt_gmt7
+
+
+ FROM  (SELECT ARRAY_AGG(o ORDER BY o.recordAt DESC LIMIT 1)[OFFSET(0)] as r
+        FROM `pangocdp-carlsberg.pangocdp_data.Zminiapp_log` o
+        GROUP BY o.id) )
+
+
+select * ,
+case when cdpappid_v2 in ("Pre-Booking Specific", "Pre-Booking Mass") then "Flagship Prebooking Hub"
+when cdpappid_v2 in ("Sampling Flagship", "Chim Rừng Sampling Flagship", "Nam Bộ Sampling Flagship", "Welcome to Carlsberg Celebration Hub Flagship", "Mùa Vàng Sampling Flagship","Phi Phố Biển Sampling Flagship") then "Flagship Sampling"
+when cdpappid_v2 in ("Quét QR Nhận Mã Rút Thăm","Carlsberg Best Beer Hunt") then "Flagship Game"
+when cdpappid_v2 in ("Sampling Commando","Welcome to Carlsberg Celebration Hub commando") then "Commando Sampling"
+end aS CamName,
+
+
+case
+when cdpAppId in( "6d5a9ccebdaf30199bc5d2b0b5515510-1696388026190", "a4fc4f14d24f5aba38a58a813e57ed8f-1697691458523") and eventName ="submit" then "generate-qr"
+else  eventName  end as eventNameV2-- submit
+
+
+from data1
+View_zminiapplog_v2:
+SELECT * from pangocdp-carlsberg.for_report.zminiapplog_Carlsberg
+where (CamName= "Flagship Prebooking Hub" and phone in(select phone from`pangocdp-carlsberg.for_report.pre-booking  hub mass_specific`)) or
+CamName in("Commando Sampling","Flagship Game","Flagship Sampling")
+View_combo_submit:
+with a as (
+        SELECT
+        r.phone, r.refId, r.event,
+
+
+         JSON_EXTRACT_SCALAR(r.csFields, '$.zoUId') as zoa_uid,
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField01') as name,
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField03') as lottery_code,
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField05') as utm_source,---
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField06') as combo,
+
+
+             datetime(r.createdAt, 'Asia/Ho_Chi_Minh') as createdAt_gmt7,
+        datetime(r.updatedAt, 'Asia/Ho_Chi_Minh') as updatedAt_gmt7
+
+
+
+
+FROM (
+        SELECT ARRAY_AGG(o ORDER BY o.recordAt DESC LIMIT 1)[OFFSET(0)] AS r
+        FROM `pangocdp-carlsberg.pangocdp_data.campaign3_register`  o
+        GROUP BY o.id)),
+
+
+    b as (    select *,
+        case when combo ="COMBO4" then "1"
+        when a.combo ="COMBO16" then "2"
+        when a.combo ="COMBO12" then "2"
+         when a.combo ="COMBO8" then "2"
+        when a.combo ="BIGTOWER" then "2" else null end as link_game
+                  from a )
+
+
+                  select * except(link_game), cast(link_game as int64) as link_game_v2 from b where phone not in ("0826843715","0393669383")
+View_combo_zminiapp_log:
+With data1 as(
+       SELECT r.*,
+case when r.cdpAppId ="e4f79b4e8872640c45486766ab9992ba-1699928320615" then "Pre-Booking Specific"--generate-qr
+when r.cdpAppId ="c4c224dd0106b51cd62e92cfe7408183-1698828742473" then "Pre-Booking Specific"--generate-qr
+when r.cdpAppId ="11a3b6106bfeacc615390b311e4dd422-1697614037060" then "Pre-Booking Specific"--generate-qr
+when r.cdpAppId ="89dd930a8cbf9969e4dddbd28c920fb4-1695195500267" then "Pre-Booking Specific" --generate-qr
+when r.cdpAppId ="f24c0d35cc21d50c79b01a85187765ae-1694076032489" then "Pre-Booking Mass"--generate-qr
+
+
+--Flagship Sampling
+when r.cdpAppId ="63f650d576103ce65630485e11d01d53-1696826756902" then "Chim Rừng Sampling Flagship" --generate-qr
+when r.cdpAppId ="368f9ecb6404e89f034ec04b476f3f40-1697700641119" then "Sampling Flagship"--generate-qr
+when r.cdpAppId = "6d5a9ccebdaf30199bc5d2b0b5515510-1696388026190" then "Welcome to Carlsberg Celebration Hub Flagship" -- submit
+when r.cdpAppId = "c7c0923d4abd1588e65d214f32efd932-1696826471414" then "Nam Bộ Sampling Flagship"--generate-qr
+when r.cdpAppId ="f5a8a706f56ce5d6c2c63e92cf1fd621-1696825675612" then "Mùa Vàng Sampling Flagship" --generate-qr
+when r.cdpAppId ="01099c687fc4f1e7ac82c127c8a6641d-1693996998250" then "Phi Phố Biển Sampling Flagship" --generate-qr
+
+
+when r.cdpAppId ="5da52f8cd32566a99cd1e1794040ad7d-1694681158339" then "Quét QR Nhận Mã Rút Thăm" -- submit
+when r.cdpAppId ="2b34500fd0c2856584ac7c06d4282c1b-1694664952722" then "Carlsberg Best Beer Hunt" --play-result
+
+
+--Commando
+
+
+when r.cdpAppId ="a4fc4f14d24f5aba38a58a813e57ed8f-1697691458523" then "Welcome to Carlsberg Celebration Hub commando" -- submit
+when r.cdpAppId ="551a207ad0e18c47d3805b85ebc2d146-1694076099952" then "Sampling Commando"--generate-qr
+
+
+
+
+end as cdpappid_v2,r.utmSource as utm_source,
+
+
+ datetime(r.  
+eventAt, 'Asia/Ho_Chi_Minh') as createdAt_gmt7
+
+
+ FROM  (SELECT ARRAY_AGG(o ORDER BY o.recordAt DESC LIMIT 1)[OFFSET(0)] as r
+        FROM `pangocdp-carlsberg.pangocdp_data.Zminiapp_log` o
+        GROUP BY o.id) )
+
+
+select * ,
+case when cdpappid_v2 in ("Pre-Booking Specific", "Pre-Booking Mass") then "Flagship Prebooking Hub"
+when cdpappid_v2 in ("Sampling Flagship", "Chim Rừng Sampling Flagship", "Nam Bộ Sampling Flagship", "Welcome to Carlsberg Celebration Hub Flagship", "Mùa Vàng Sampling Flagship","Phi Phố Biển Sampling Flagship") then "Flagship Sampling"
+when cdpappid_v2 in ("Quét QR Nhận Mã Rút Thăm","Carlsberg Best Beer Hunt") then "Flagship Game"
+when cdpappid_v2 in ("Sampling Commando","Welcome to Carlsberg Celebration Hub commando") then "Commando Sampling"
+end aS CamName,
+
+
+case
+when cdpAppId in( "6d5a9ccebdaf30199bc5d2b0b5515510-1696388026190", "a4fc4f14d24f5aba38a58a813e57ed8f-1697691458523") and eventName ="submit" then "generate-qr"
+else  eventName  end as eventNameV2,-- submit
+
+
+case
+when eventData like "%Túi Du Lịch%" then "Túi Du Lịch"
+when eventData like "%Túi Giày%" then "Túi Giày"
+when eventData like "%Topup 30K%" then "TopUp 30K"
+when eventData like "%Topup 10k%" then "TopUp 10K"
+end as Qua,
+
+
+from data1 where cdpAppId ="2b34500fd0c2856584ac7c06d4282c1b-1694664952722"
+View_journey_event:
+SELECT
+case when (r.eventLabel3s like "%utm_source%" and r.eventLabel2s Like '%2b34500fd0c2856584ac7c06d4282c1b-1694664952722%') then trim(split(r.eventLabel3s,'utm_source: ')[offset(1)]) else null end as utm_source,
+case when (r.eventLabel2s like "%result%" and r.eventLabel2s Like '%2b34500fd0c2856584ac7c06d4282c1b-1694664952722%') then trim(left(split(r.eventLabel2s,'result: ')[offset(1)],5)) else null end as resultslip,
+r.* ,  datetime(r.eventAt, 'Asia/Ho_Chi_Minh') as eventAt_gmt7,
+case
+when r.eventLabel2s like "%Túi Du Lịch%" then "Túi Du Lịch"
+when r.eventLabel2s like "%Túi Giày%" then "Túi Giày"
+when r.eventLabel2s like "%Topup 30K%" then "TopUp 30K"
+when r.eventLabel2s like "%Topup 10k%" then "TopUp 10K"
+end as Qua,
+ case
+ when r.eventLabel2s Like "%PhiPhoBienRestaurant%" then"PhiPhoBien"
+ when r.eventLabel2s Like "%MuaVang%" then"MuaVang"
+ when r.eventLabel2s Like "%DauCamping%" then"DauCamping"
+ when r.eventLabel2s Like "%NhaHangKhongGian%" then"NhaHangKhongGian"
+ when r.eventLabel2s Like "%AmThucHoaSon%" then"AmThucHoaSon"
+ when r.eventLabel2s Like "%MuaVangTheWareHouse%" then"MuaVangTheWareHouse"
+ when r.eventLabel2s Like "%NhaHangThinhVuong%" then"NhaHangThinhVuong"
+ when r.eventLabel2s Like "%ChimRung%" then"ChimRung"
+ when r.eventLabel2s Like "%HoangLan%" then"HoangLan"
+ when r.eventLabel2s Like "%NhaHangNamBo%" then"NhaHangNamBo"
+ when r.eventLabel2s Like "%Clay%" then"Clay"
+ end UTM_SOURCE_V1
+FROM
+(SELECT ARRAY_AGG(o ORDER BY o.recordAt DESC LIMIT 1)[OFFSET(0)] AS r
+        FROM `pangocdp-carlsberg.pangocdp_data.journey_event`  o
+        -- where o.eventName Like '%play-result%'
+        GROUP BY o.id)
+view_Sampling_submit:
+with a as (
+        SELECT
+        r.phone, r.refId, r.event,
+
+
+         JSON_EXTRACT_SCALAR(r.csFields, '$.zoUId') as zoa_uid,
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField01') as name,
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField03') as gender,
+       JSON_EXTRACT_SCALAR(r.csFields, '$.customField04') as age_range,
+       JSON_EXTRACT_SCALAR(r.csFields, '$.customField05') as brand,
+
+
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField08') as Qrinfo_ID,
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField09') as utm_source,    
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField10') as utm_medium,  
+        -- JSON_EXTRACT_SCALAR(r.csFields, '$.customField11') as utm_campaign,      
+         JSON_EXTRACT_SCALAR(r.csFields, '$.customField07') as qr_campaign_id,
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField06') as Qr_background,
+        -- JSON_EXTRACT_SCALAR(r.csFields, '$.customField10') as utm_medium,
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField11') as utm_campaign,    
+             datetime(r.createdAt, 'Asia/Ho_Chi_Minh') as createdAt_gmt7,
+        datetime(r.updatedAt, 'Asia/Ho_Chi_Minh') as updatedAt_gmt7
+
+
+--  DateTime(TIMESTAMP_SECONDS(CAST(JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldTimestamp02') AS INT64)),'Asia/Ho_Chi_Minh') as expired_date_GMT7,
+FROM (
+        SELECT ARRAY_AGG(o ORDER BY o.recordAt DESC LIMIT 1)[OFFSET(0)] AS r
+        FROM `pangocdp-carlsberg.pangocdp_data.sampling_submit` o
+        GROUP BY o.id))
+
+
+        select *,
+        case when utm_source="PhiPhoBien"then"Phi Phố Biển"
+ when utm_source="MuaVangTheWarehouse"then"Mùa Vàng The Warehouse"
+ when utm_source="NamBoTranNao"then"Nam Bộ Trần Não"
+ when  utm_source="ChimRung"then"Chim Rừng" else "null"
+  end as utm_source_pronounce
+from a
+
+
+view_sampling_Redeem:
+with a as (
+        SELECT
+        r.phone, r.refId, r.event,
+
+
+         JSON_EXTRACT_SCALAR(r.csFields, '$.zoUId') as zoa_uid,
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField01') as pg_phone,
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField03') as gender,
+       JSON_EXTRACT_SCALAR(r.csFields, '$.customField04') as  zalo_userappid,
+       JSON_EXTRACT_SCALAR(r.csFields, '$.customField05') as brand,
+JSON_EXTRACT_SCALAR(r.csFields, '$.customField15') as qr_background_url,
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField08') as utm_campaign,
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField09') as qr_campaign_id,    
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField10') as qr_status,  
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField11') as pg_name,      
+         JSON_EXTRACT_SCALAR(r.csFields, '$.customField07') as utm_medium,
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField06') as utm_source,
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField14') as qrinfo_id,
+        -- JSON_EXTRACT_SCALAR(r.csFields, '$.customField11') as utm_campaign,    
+             datetime(r.createdAt, 'Asia/Ho_Chi_Minh') as createdAt_gmt7,
+        datetime(r.updatedAt, 'Asia/Ho_Chi_Minh') as updatedAt_gmt7
+
+
+--  DateTime(TIMESTAMP_SECONDS(CAST(JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldTimestamp02') AS INT64)),'Asia/Ho_Chi_Minh') as expired_date_GMT7,
+FROM (
+        SELECT ARRAY_AGG(o ORDER BY o.recordAt DESC LIMIT 1)[OFFSET(0)] AS r
+        FROM`pangocdp-carlsberg.pangocdp_data.sampling_qr_redeem` o
+        GROUP BY o.id))
+
+
+        select *,
+        case when utm_source="PhiPhoBien"then"Phi Phố Biển"
+ when utm_source="MuaVangTheWarehouse"then"Mùa Vàng The Warehouse"
+ when utm_source="NamBoTranNao"then"Nam Bộ Trần Não"
+ when  utm_source="ChimRung"then"Chim Rừng" else "null"
+  end as utm_source_pronounce
+from a
+
+
+View_specific_redeem:
+
+with a as (
+        SELECT
+        r.phone, r.refId, r.event,
+
+
+         JSON_EXTRACT_SCALAR(r.csFields, '$.zoUId') as zoa_uid,
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField01') as pg_phone,
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField03') as name,
+       JSON_EXTRACT_SCALAR(r.csFields, '$.customField04') as zalo_userappid,
+       JSON_EXTRACT_SCALAR(r.csFields, '$.customField06') as utm_source,
+JSON_EXTRACT_SCALAR(r.csFields, '$.customField07') as utm_medium,
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField08') as utm_campaign,
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField09') as qr_campaignid,    
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField10') as qr_status,  
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField11') as pg_name,      
+         JSON_EXTRACT_SCALAR(r.csFields, '$.customField15') as qr_background_url,
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField14') as qr_infoid,
+        -- JSON_EXTRACT_SCALAR(r.csFields, '$.customField10') as utm_medium,
+        -- JSON_EXTRACT_SCALAR(r.csFields, '$.customField11') as ngay_booking,    
+             datetime(r.createdAt, 'Asia/Ho_Chi_Minh') as createdAt_gmt7,
+        datetime(r.updatedAt, 'Asia/Ho_Chi_Minh') as updatedAt_gmt7
+
+
+--  DateTime(TIMESTAMP_SECONDS(CAST(JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldTimestamp02') AS INT64)),'Asia/Ho_Chi_Minh') as expired_date_GMT7,
+FROM (
+        SELECT ARRAY_AGG(o ORDER BY o.recordAt DESC LIMIT 1)[OFFSET(0)] AS r
+        FROM `pangocdp-carlsberg.pangocdp_data.specific_redeem`  o
+        GROUP BY o.id))
+        select * from a where phone not in ("0902840388")
+
+
+ 
+View_specific_submit:
+with a as (
+        SELECT
+        r.phone, r.refId, r.event,
+
+
+         JSON_EXTRACT_SCALAR(r.csFields, '$.zoUId') as zoa_uid,
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField01') as name,
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField03') as quan_dk,
+       JSON_EXTRACT_SCALAR(r.csFields, '$.customField04') as khunggio_booking,
+       JSON_EXTRACT_SCALAR(r.csFields, '$.customField05') as combo,
+JSON_EXTRACT_SCALAR(r.csFields, '$.customField15') as gender,
+JSON_EXTRACT_SCALAR(r.csFields, '$.customField16') as address,
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField08') as Qrinfo_ID,
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField09') as qr_campaign,    
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField10') as status,  
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField12') as utm_source,      
+         JSON_EXTRACT_SCALAR(r.csFields, '$.customField07') as qr_background_url,
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField06') as soluong_kh,
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField13') as utm_medium,
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField11') as ngay_booking,  
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField14') as utm_campaign,        
+             datetime(r.createdAt, 'Asia/Ho_Chi_Minh') as createdAt_gmt7,
+        datetime(r.updatedAt, 'Asia/Ho_Chi_Minh') as updatedAt_gmt7
+
+
+--  DateTime(TIMESTAMP_SECONDS(CAST(JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldTimestamp02') AS INT64)),'Asia/Ho_Chi_Minh') as expired_date_GMT7,
+FROM (
+        SELECT ARRAY_AGG(o ORDER BY o.recordAt DESC LIMIT 1)[OFFSET(0)] AS r
+        FROM `pangocdp-carlsberg.pangocdp_data.prebooking_specific_submit` o
+        GROUP BY o.id))
+
+
+select *,
+-- "a" as a,
+        extract(week from createdAt_gmt7) as week_num
+from a  where phone not in ("0826843715")
+View_mass_submit:
+with a as (
+        SELECT
+        r.phone, r.refId, r.event,
+
+
+         JSON_EXTRACT_SCALAR(r.csFields, '$.zoUId') as zoa_uid,
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField01') as name,
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField03') as quan_dk,
+       JSON_EXTRACT_SCALAR(r.csFields, '$.customField04') as khunggio_booking,
+       JSON_EXTRACT_SCALAR(r.csFields, '$.customField05') as combo,
+JSON_EXTRACT_SCALAR(r.csFields, '$.customField15') as gender,
+JSON_EXTRACT_SCALAR(r.csFields, '$.customField16') as address,
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField08') as Qrinfo_ID,
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField09') as qr_campaign,    
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField10') as status,  
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField12') as ngay_booking,      
+         JSON_EXTRACT_SCALAR(r.csFields, '$.customField07') as qr_background_url,
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField06') as soluong_kh,
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField13') as utm_medium,
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField11') as utm_source,  
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField14') as utm_campaign,        
+             datetime(r.createdAt, 'Asia/Ho_Chi_Minh') as createdAt_gmt7,
+        datetime(r.updatedAt, 'Asia/Ho_Chi_Minh') as updatedAt_gmt7
+
+
+--  DateTime(TIMESTAMP_SECONDS(CAST(JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldTimestamp02') AS INT64)),'Asia/Ho_Chi_Minh') as expired_date_GMT7,
+FROM (
+        SELECT ARRAY_AGG(o ORDER BY o.recordAt DESC LIMIT 1)[OFFSET(0)] AS r
+        FROM `pangocdp-carlsberg.pangocdp_data.prebooking_mass_submit` o
+        GROUP BY o.id))
+
+
+select *,
+-- "a" as a,
+        extract(week from createdAt_gmt7) as week_num
+from a  where phone not in ("0826843715")
+
+
+
+
+
+
+
+
+
+
+View_mass_redeem:
+with a as (
+        SELECT
+        r.phone, r.refId, r.event,
+
+
+         JSON_EXTRACT_SCALAR(r.csFields, '$.zoUId') as zoa_uid,
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField01') as pg_phone,
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField03') as name,
+       JSON_EXTRACT_SCALAR(r.csFields, '$.customField04') as zalo_userappid,
+       JSON_EXTRACT_SCALAR(r.csFields, '$.customField06') as utm_source,
+JSON_EXTRACT_SCALAR(r.csFields, '$.customField07') as utm_medium,
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField08') as utm_campaign,
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField09') as qr_campaignid,    
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField10') as qr_status,  
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField11') as pg_name,      
+         JSON_EXTRACT_SCALAR(r.csFields, '$.customField15') as qr_background_url,
+        JSON_EXTRACT_SCALAR(r.csFields, '$.customField14') as qr_infoid,
+        -- JSON_EXTRACT_SCALAR(r.csFields, '$.customField10') as utm_medium,
+        -- JSON_EXTRACT_SCALAR(r.csFields, '$.customField11') as ngay_booking,    
+             datetime(r.createdAt, 'Asia/Ho_Chi_Minh') as createdAt_gmt7,
+        datetime(r.updatedAt, 'Asia/Ho_Chi_Minh') as updatedAt_gmt7
+
+
+--  DateTime(TIMESTAMP_SECONDS(CAST(JSON_EXTRACT_SCALAR(r.csFields, '$.customFieldTimestamp02') AS INT64)),'Asia/Ho_Chi_Minh') as expired_date_GMT7,
+FROM (
+        SELECT ARRAY_AGG(o ORDER BY o.recordAt DESC LIMIT 1)[OFFSET(0)] AS r
+        FROM `pangocdp-carlsberg.pangocdp_data.mass_redeem`  o
+        GROUP BY o.id))
+        select * from a
+
+
+ 
+View_journeyevent_split_result:
+with a as
+(SELECT * FROM `pangocdp-carlsberg.pangocdp_data.journey_event`,unnest(split(eventLabel2s,'|')) as result_1 where result_1  like "%result%" and eventName="play-result")
+
+
+select  *, trim(result_1) as result from a
+View_journeyevent_splut_username:
+with a as (SELECT * from `pangocdp-carlsberg.for_report.journey_event`,
+unnest(split(eventLabel2s,'|')) as user_name where user_name  like "%user_name%" and eventName="play-result")
+select *, trim(user_name) as user_name_v2 from a
+View_journeyevent_split_vouchername:
+with a as (SELECT * FROM pangocdp-carlsberg.for_report.journey_event  ,unnest(split(
+eventLabel2s,"|")) as voucher_name_split ,
+unnest(split(
+eventLabel2s,"|")) as source_split
+ where eventName ="play-result"and voucher_name_split like "%voucher_name%" and source_split like "%quan%")
+
+
+select *, trim(voucher_name_split) as voucher_name_split_v2   ,cast( source_split as string ) as source_split_1, cast(voucher_name_split as string ) as voucher_name_1,row_number() over (partition by id) as row_num from a
+
+
+View_specific_submit_split_combo:
+ with a as (select  *, REPLACE(REPLACE(TRIM(combo_split),'[',''),']','') as combo_split_2,
+   row_number() over (partition by combo,phone,qr_background_url  ) as row_num
+  --  row_number() over (partition by REPLACE(REPLACE(TRIM(combo_split),'[',''),']','') )as row_num
+ from `pangocdp-carlsberg.for_report.specific_submit`  ,
+          unnest(split(combo,'_')) combo_split )
+
+
+
+
+          select * from a  where row_num =1
+View_tyle_redeem:
+with a as (select a.*,
+b.Pg_name,
+b.Pg_phone,              
+b.Qrinfo_ID as qr_infoid,      
+b.qr_status,      
+-- b.cdp_appid,                
+b.Qr_background_url,        
+b.createdAt_gmt7  as qr_createdAT,
+b.utm_source as qr_source,
+b.utm_medium as qr_medium,
+b.utm_campaign as qr_campaign,
+-- b.utm_medium_defi
+
+
+from  `pangocdp-carlsberg.for_report.sampling_commando_flagship`a  left join `pangocdp-carlsberg.for_report.sampling_redeem_commando_flagship`b
+on a.zoa_uid = b.zoa_uid and a.phone = b.phone )
+select * from a
+View_combo_submit_count_tylequaylai:
+with row_num as
+(SELECT zoa_uid ,utm_source,  row_number() over (partition by zoa_uid order by createdAt_gmt7 desc
+   ) as row_num     FROM `pangocdp-carlsberg.for_report.Combo_submit` ),
+   count_row_num as
+    (select zoa_uid ,utm_source, count(row_num) as so_luong from row_num group by 1,2 )
+    select * from count_row_num
+
